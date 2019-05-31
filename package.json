@@ -1,0 +1,36 @@
+{
+  "name": "tiny-s3-uploader",
+  "version": "1.0.0",
+  "description": "A tiny S3 uploader which doesn't need the fat aws-sdk.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint-and-fix": "eslint src/**/* --fix"
+  },
+  "devDependencies": {
+    "typescript": "3.5.1",
+    "@typescript-eslint/parser": "1.9.0",
+    "@typescript-eslint/eslint-plugin": "1.9.0",
+    "eslint": "5.16.0",
+    "@types/node": "^12.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MagicCap/tiny-s3-uploader.git"
+  },
+  "keywords": [
+    "s3"
+  ],
+  "author": "Jake Gealer",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/MagicCap/tiny-s3-uploader/issues"
+  },
+  "homepage": "https://github.com/MagicCap/tiny-s3-uploader#readme",
+  "dependencies": {
+    "chainfetch": "^1.2.2",
+    "aws4": "1.8.0",
+    "node-fetch": "^2.6.0"
+  }
+}
