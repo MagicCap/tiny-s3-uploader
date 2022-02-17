@@ -16,7 +16,9 @@ export class S3 {
         private accessKeyId: string,
         private secretAccessKey: string,
         public bucketName: string
-    ) {}
+    ) {
+        if (!this.endpoint.match(/https:\/\//)) this.endpoint = `https://${this.endpoint}`
+    }
 
     /**
      * Uploads the file specified to the S3 bucket which this class was setup for.
@@ -28,7 +30,7 @@ export class S3 {
      */
     public async upload(key: string, acl: string = "public-read", contentType: string = "binary/octet-stream", content: Buffer): Promise<void> {
         const p = `/${encodeURIComponent(this.bucketName)}/${encodeURIComponent(key)}`
-        const url = `https://${this.endpoint}${p}`
+        const url = `${this.endpoint}${p}`
         const hash = createHash("sha256")
         hash.write(content)
         const digest = hash.digest("hex")
