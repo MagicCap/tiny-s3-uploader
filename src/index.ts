@@ -1,4 +1,4 @@
-import { put } from "chainfetch"
+import fetch from "node-fetch"
 import { sign } from "aws4"
 import { createHash } from "crypto"
 
@@ -49,14 +49,21 @@ export class S3 {
             accessKeyId: this.accessKeyId,
             secretAccessKey: this.secretAccessKey,
         })
-        await put(url)
-            .set("Authorization", awsSign.headers.Authorization)
-            .set("X-Amz-Date", awsSign.headers["X-Amz-Date"])
-            .set("Host", awsSign.headers.Host)
-            .set("Content-Length", bufferLen.toString())
-            .set("Content-Type", contentType)
-            .set("X-Amz-Acl", acl)
-            .set("X-Amz-Content-Sha256", digest)
-            .send(content)
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": awsSign.headers.Authorization,
+                "X-Amz-Date": awsSign.headers["X-Amz-Date"],
+                "Host": awsSign.headers.Host,
+                "Content-Length": bufferLen.toString(),
+                "Content-Type": contentType,
+                "X-Amz-Acl": acl,
+                "X-Amz-Content-Sha256": digest,
+            },
+            body: content,
+        })
+        if (res.status !== 200) {
+            throw new Error(`Failed to upload to S3, status code: ${res.status}`)
+        }
     }
 }
