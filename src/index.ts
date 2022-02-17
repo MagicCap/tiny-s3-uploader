@@ -36,7 +36,7 @@ export class S3 {
         const digest = hash.digest("hex")
         const bufferLen = content.length
         const awsSign = sign({
-            host: this.endpoint,
+            host: new URL(this.endpoint).host,
             path: p,
             headers: {
                 "X-Amz-Acl": acl,
