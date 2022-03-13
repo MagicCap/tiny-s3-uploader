@@ -1,6 +1,37 @@
-import fetch from "node-fetch"
+import * as http from "http"
+import * as https from "https"
 import { sign } from "aws4"
 import { createHash } from "crypto"
+
+type httpRequestor = (options: http.RequestOptions | https.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest
+
+function doHttpRequest(method: string, url: string, headers: {[key: string]: string}, body?: Buffer) {
+    const u = new URL(url)
+    let requestor: httpRequestor
+    let secure = false
+    if (u.protocol === "http:") {
+        requestor = http.request
+    } else if (u.protocol === "https:") {
+        requestor = https.request
+        secure = true
+    } else {
+        throw new Error("Unsupported protocol: " + u.protocol)
+    }
+    return new Promise((res, rej) => {
+        const headersCpy = Object.assign({}, headers)
+        if (!headersCpy["Content-Length"]) {
+            headersCpy["Content-Length"] = body ? body.length.toString() : "0"
+        }
+        const handler = requestor({
+            method, path: u.pathname, hostname: u.hostname,
+            port: secure ? u.port || 443 : u.port || 80,
+            headers: headersCpy,
+        }, result => res(result.statusCode))
+        handler.on("error", rej)
+        if (body) handler.write(body)
+        handler.end()
+    })
+}
 
 export class S3 {
     /**
@@ -51,21 +82,17 @@ export class S3 {
             accessKeyId: this.accessKeyId,
             secretAccessKey: this.secretAccessKey,
         })
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Authorization": awsSign.headers.Authorization,
-                "X-Amz-Date": awsSign.headers["X-Amz-Date"],
-                "Host": awsSign.headers.Host,
-                "Content-Length": bufferLen.toString(),
-                "Content-Type": contentType,
-                "X-Amz-Acl": acl,
-                "X-Amz-Content-Sha256": digest,
-            },
-            body: content,
-        })
-        if (res.status !== 200) {
-            throw new Error(`Failed to upload to S3, status code: ${res.status}`)
+        const res = await doHttpRequest("PUT", url, {
+            "Authorization": awsSign.headers.Authorization,
+            "X-Amz-Date": awsSign.headers["X-Amz-Date"],
+            "Host": awsSign.headers.Host,
+            "Content-Length": bufferLen.toString(),
+            "Content-Type": contentType,
+            "X-Amz-Acl": acl,
+            "X-Amz-Content-Sha256": digest,
+        }, content)
+        if (res !== 200) {
+            throw new Error(`Failed to upload to S3, status code: ${res}`)
         }
     }
 }
